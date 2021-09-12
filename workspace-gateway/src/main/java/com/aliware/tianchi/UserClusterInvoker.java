@@ -8,6 +8,9 @@ import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.support.AbstractClusterInvoker;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
@@ -17,6 +20,7 @@ import java.util.List;
  * 选手需要基于此类实现自己的集群调度算法
  */
 public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
+    private final static Logger logger = LoggerFactory.getLogger(UserClusterInvoker.class);
     public UserClusterInvoker(Directory<T> directory) {
         super(directory);
     }
@@ -26,7 +30,7 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
         return select(loadbalance, invocation, invokers, null).invoke(invocation)
                 .whenCompleteWithContext((r, t) -> {
                     String value = r.getAttachment("TestKey");
-                    System.out.println("TestKey From ClusterInvoker, value: " + value);
+                    logger.info("TestKey From ClusterInvoker, value: " + value);
                 });
     }
 }
