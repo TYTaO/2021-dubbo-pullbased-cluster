@@ -30,8 +30,8 @@ public class TestClientClusterFilter implements ClusterFilter, BaseFilter.Listen
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        String value = appResponse.getAttachment("TestKey");
-        System.out.println("TestKey From ClusterFilter, value: " + value);
+//        String value = appResponse.getAttachment("TestKey");
+//        System.out.println("TestKey From ClusterFilter, value: " + value);
     }
 
     @Override

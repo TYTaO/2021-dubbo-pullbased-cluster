@@ -33,12 +33,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        // 获取内存信息样例
-        SystemInfo si = new SystemInfo();
-        HardwareAbstractionLayer hal = si.getHardware();
-        GlobalMemory memory = hal.getMemory();
 
-        appResponse.setAttachment("TestKey", String.valueOf(memory.getVirtualMemory().getVirtualMax()));
     }
 
     @Override

@@ -1,13 +1,14 @@
 package com.aliware.tianchi;
 
+import com.aliware.tianchi.exception.ErrorMsg;
+import com.aliware.tianchi.util.AllUtil;
+import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
-import org.apache.dubbo.rpc.BaseFilter;
-import org.apache.dubbo.rpc.Filter;
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.rpc.*;
+
+import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
+import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
 
 /**
  * 客户端过滤器（选址后）
@@ -17,25 +18,57 @@ import org.apache.dubbo.rpc.RpcException;
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
+    private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
+
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        try {
-            Result result = invoker.invoke(invocation);
-            return result;
-        } catch (Exception e) {
-            throw e;
+        URL url = invoker.getUrl();
+        String methodName = invocation.getMethodName();
+        RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, 15);
+        int max = 5; // todo
+        final RpcStatus rpcStatus = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
+        if (!RpcStatus.beginCount(url, methodName, max)) {
+            throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
+                    "=.= Waiting concurrent invoke timeout in client-side for service:  " +
+                            invoker.getInterface().getName() + ", method: " + invocation.getMethodName() +
+                            ". concurrent invokes: " +
+                            rpcStatus.getActive() + ". max concurrent invoke limit: " + max);
         }
 
+        invocation.put(ACTIVELIMIT_FILTER_START_TIME, System.currentTimeMillis());
+        System.out.println("active: " + rpcStatus.getActive());
+        return invoker.invoke(invocation);
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        String value = appResponse.getAttachment("TestKey");
-        System.out.println("TestKey From Filter, value: " + value);
+        String methodName = invocation.getMethodName();
+        URL url = invoker.getUrl();
+        int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
+
+        RpcStatus.endCount(url, methodName, getElapsed(invocation), true);
+        System.out.println("+succ: " + RpcStatus.getStatus(url).getSucceeded());
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
+        System.out.println(t);
+        String methodName = invocation.getMethodName();
+        URL url = invoker.getUrl();
+        int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
 
+        if (t instanceof RpcException) {
+            RpcException rpcException = (RpcException) t;
+            if (rpcException.isLimitExceed()) {
+                return;
+            }
+        }
+        RpcStatus.endCount(url, methodName, getElapsed(invocation), false);
+        System.out.println("-fail: " + RpcStatus.getStatus(url).getFailed());
+    }
+
+    private long getElapsed(Invocation invocation) {
+        Object beginTime = invocation.get(ACTIVELIMIT_FILTER_START_TIME);
+        return beginTime != null ? System.currentTimeMillis() - (Long) beginTime : 0;
     }
 }
