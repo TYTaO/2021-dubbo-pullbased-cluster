@@ -25,7 +25,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         URL url = invoker.getUrl();
         String methodName = invocation.getMethodName();
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, 15);
-        int max = 5; // todo
+        int max = 10; // todo
         final RpcStatus rpcStatus = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
         if (!RpcStatus.beginCount(url, methodName, max)) {
             throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
@@ -36,7 +36,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
 
         invocation.put(ACTIVELIMIT_FILTER_START_TIME, System.currentTimeMillis());
-        System.out.println("active: " + rpcStatus.getActive());
+        System.out.println("active: " + rpcStatus.getActive() + " max: " + max);
         return invoker.invoke(invocation);
     }
 
