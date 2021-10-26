@@ -7,6 +7,8 @@ import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
 import org.apache.dubbo.rpc.*;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
 import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
 
@@ -18,44 +20,43 @@ import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
-    private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
+
+    private static final AtomicInteger countToMax = new AtomicInteger(0);
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        long start = System.currentTimeMillis();
         URL url = invoker.getUrl();
-        String methodName = invocation.getMethodName();
-        RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, 15);
-        int max = 10; // todo
-        final RpcStatus rpcStatus = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
-        if (!RpcStatus.beginCount(url, methodName, max)) {
+        int timeout = 9;
+        RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
+        int max = 65; // todo
+        final MyCount myCount = MyCount.getCount(url);
+        if (!myCount.beginCount(url, max)) {
+            countToMax.incrementAndGet();
             throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
-                    "=.= Waiting concurrent invoke timeout in client-side for service:  " +
+                    "=.= get to limit concurrent invoke for service:  " +
                             invoker.getInterface().getName() + ", method: " + invocation.getMethodName() +
                             ". concurrent invokes: " +
-                            rpcStatus.getActive() + ". max concurrent invoke limit: " + max);
+                            myCount.getActive() + ". max concurrent invoke limit: " + max);
         }
 
-        invocation.put(ACTIVELIMIT_FILTER_START_TIME, System.currentTimeMillis());
-        System.out.println("active: " + rpcStatus.getActive() + " max: " + max);
-        return invoker.invoke(invocation);
+        Result result = invoker.invoke(invocation);
+        System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
+        return result;
     }
 
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
-        String methodName = invocation.getMethodName();
         URL url = invoker.getUrl();
-        int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
 
-        RpcStatus.endCount(url, methodName, getElapsed(invocation), true);
-        System.out.println("+succ: " + RpcStatus.getStatus(url).getSucceeded());
+        MyCount.endCount(url, true);
+        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded());
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        System.out.println(t);
-        String methodName = invocation.getMethodName();
+        System.out.println("== " + t);
         URL url = invoker.getUrl();
-        int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
 
         if (t instanceof RpcException) {
             RpcException rpcException = (RpcException) t;
@@ -63,12 +64,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 return;
             }
         }
-        RpcStatus.endCount(url, methodName, getElapsed(invocation), false);
-        System.out.println("-fail: " + RpcStatus.getStatus(url).getFailed());
-    }
-
-    private long getElapsed(Invocation invocation) {
-        Object beginTime = invocation.get(ACTIVELIMIT_FILTER_START_TIME);
-        return beginTime != null ? System.currentTimeMillis() - (Long) beginTime : 0;
+        MyCount.endCount(url, false);
+        System.out.println("-fail: " + MyCount.getCount(url).getFailed());
     }
 }
