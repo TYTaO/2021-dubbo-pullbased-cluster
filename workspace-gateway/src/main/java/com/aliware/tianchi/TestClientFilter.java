@@ -26,7 +26,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         URL url = invoker.getUrl();
-        int timeout = 5;
+        int timeout = 10;
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
         int max = 100; // todo
         final MyCount myCount = MyCount.getCount(url);
@@ -40,6 +40,12 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
 
         Result result = invoker.invoke(invocation);
+        // wait server a little
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
         return result;
     }
@@ -54,7 +60,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        System.out.println("== " + t);
+//        System.out.println("== " + t);
         URL url = invoker.getUrl();
 
         if (t instanceof RpcException) {

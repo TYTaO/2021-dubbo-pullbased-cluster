@@ -28,8 +28,8 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         URL url = invoker.getUrl();
-        int max = 6; // todo
         final MyCount myCount = MyCount.getCount(url);
+        int max = myCount.getMax(); // todo
         if (!myCount.beginCount(url, max)) {
             countToMax.incrementAndGet();
             throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
@@ -40,7 +40,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
         try {
             Result result = invoker.invoke(invocation);
-            System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
+//            System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
             return result;
         } catch (Throwable t) {
             if (t instanceof RuntimeException) {
@@ -61,7 +61,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
-        System.out.println("== " + t);
+//        System.out.println("== " + t);
         URL url = invoker.getUrl();
 
         if (t instanceof RpcException) {
@@ -71,6 +71,6 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
             }
         }
         MyCount.endCount(url, false);
-        System.out.println("-fail: " + MyCount.getCount(url).getFailed());
+//        System.out.println("-fail: " + MyCount.getCount(url).getFailed());
     }
 }
