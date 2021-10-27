@@ -1,7 +1,5 @@
 package com.aliware.tianchi;
 
-import com.aliware.tianchi.exception.ErrorMsg;
-import com.aliware.tianchi.util.AllUtil;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
