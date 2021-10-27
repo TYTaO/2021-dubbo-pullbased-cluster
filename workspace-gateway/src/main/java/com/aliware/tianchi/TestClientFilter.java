@@ -19,12 +19,14 @@ import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
 @Activate(group = CommonConstants.CONSUMER)
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
+    private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
     private static final AtomicInteger countToMax = new AtomicInteger(0);
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        invocation.put(ACTIVELIMIT_FILTER_START_TIME, System.currentTimeMillis());
         URL url = invoker.getUrl();
-        int timeout = 10; // todo
+        int timeout = MyRpcStatus.getTimeout(url); // todo
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
         int max = 100; // todo
         final MyCount myCount = MyCount.getCount(url);
@@ -53,6 +55,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         URL url = invoker.getUrl();
 
         MyCount.endCount(url, true);
+        MyRpcStatus.endCount(url, getElapsed(invocation), true);
         System.out.println("+succ: " + MyCount.getCount(url).getSucceeded());
     }
 
@@ -67,7 +70,13 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 return;
             }
         }
+        MyRpcStatus.endCount(url, getElapsed(invocation), false);
         MyCount.endCount(url, false);
         System.out.println("-fail: " + MyCount.getCount(url).getFailed());
+    }
+
+    private long getElapsed(Invocation invocation) {
+        Object beginTime = invocation.get(ACTIVELIMIT_FILTER_START_TIME);
+        return beginTime != null ? System.currentTimeMillis() - (Long) beginTime : 0;
     }
 }
