@@ -43,7 +43,7 @@ public class MyRpcStatus {
         if (lastElapsed == 0) {
             return initTimeout;
         }
-        int max = (int) RpcStatus.getStatus(url).getSucceededAverageElapsed() * 3;
+        int max = (int) MyCount.getCount(url).getSucceededAverageElapsed() * 3;
         if (lastElapsed > max) {
             return max;
         }

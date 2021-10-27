@@ -12,12 +12,12 @@ public class MyCount {
     private static final ConcurrentMap<String, MyCount> SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyCount>();
 
-    private static final int initMax = 10;
+    private static final int initMax = 30;
     private static final int initStep = 3;
     private static final int maxStepAbs = 3;
     private static final int minStepAbs = 3;
     private static final long interval = 2500; // 2s
-    private static final long preheatInterval = 300; // 2s
+    private static final long preheatInterval = 600; // 2s
     private static final int stepAbsFix = 3; //
     private static final long preheatIntervalSum = 50000; //
     private static final long preheatSumDdl = System.currentTimeMillis() + preheatIntervalSum; //
@@ -148,7 +148,7 @@ public class MyCount {
     }
 
     private int getStep(int lastReq, int thisReq, int oldStep) {
-        int slope = thisReq - lastReq;
+        int slope = (thisReq - lastReq) / oldStep;
 
         return slope >= 0 ? stepAbsFix : -stepAbsFix;
     }

@@ -28,7 +28,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         URL url = invoker.getUrl();
         int timeout = MyRpcStatus.getTimeout(url); // todo
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
-        int max = 100; // todo
+        int max = 200; // todo
         final MyCount myCount = MyCount.getCount(url);
         if (!myCount.beginCount(url, max)) {
             countToMax.incrementAndGet();
@@ -42,7 +42,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         Result result = invoker.invoke(invocation);
         // wait server a little
         try {
-            Thread.sleep(1);
+            Thread.sleep(2);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -54,7 +54,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         URL url = invoker.getUrl();
 
-        MyCount.endCount(url, true);
+        MyCount.endCount(url, getElapsed(invocation),true);
         MyRpcStatus.endCount(url, getElapsed(invocation), true);
         System.out.println("+succ: " + MyCount.getCount(url).getSucceeded());
     }
@@ -71,7 +71,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
             }
         }
         MyRpcStatus.endCount(url, getElapsed(invocation), false);
-        MyCount.endCount(url, false);
+        MyCount.endCount(url, getElapsed(invocation),false);
         System.out.println("-fail: " + MyCount.getCount(url).getFailed());
     }
 

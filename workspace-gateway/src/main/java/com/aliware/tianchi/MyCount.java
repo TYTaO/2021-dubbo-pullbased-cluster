@@ -16,6 +16,7 @@ public class MyCount {
     private final AtomicInteger active = new AtomicInteger();
     private final AtomicLong succeeded = new AtomicLong();
     private final AtomicInteger failed = new AtomicInteger();
+    private final AtomicLong totalSuccElapsed = new AtomicLong();
 
     private MyCount() {
     }
@@ -55,14 +56,23 @@ public class MyCount {
         return true;
     }
 
-    public static void endCount(URL url, boolean succeeded) {
+    public static void endCount(URL url, long elapsed, boolean succeeded) {
         MyCount count = getCount(url);
         count.active.decrementAndGet();
 
         if (succeeded) {
             count.succeeded.incrementAndGet();
+            count.totalSuccElapsed.addAndGet(elapsed);
         } else {
             count.failed.incrementAndGet();
         }
+    }
+
+    public long getSucceededAverageElapsed() {
+        long succeeded = getSucceeded();
+        if (succeeded == 0) {
+            return 0;
+        }
+        return totalSuccElapsed.get() / succeeded;
     }
 }
