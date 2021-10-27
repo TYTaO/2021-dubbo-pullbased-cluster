@@ -25,11 +25,10 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        long start = System.currentTimeMillis();
         URL url = invoker.getUrl();
-        int timeout = 9;
+        int timeout = 5;
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
-        int max = 65; // todo
+        int max = 100; // todo
         final MyCount myCount = MyCount.getCount(url);
         if (!myCount.beginCount(url, max)) {
             countToMax.incrementAndGet();

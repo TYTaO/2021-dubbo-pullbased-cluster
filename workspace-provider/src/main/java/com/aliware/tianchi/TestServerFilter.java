@@ -28,7 +28,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         URL url = invoker.getUrl();
-        int max = 65; // todo
+        int max = 6; // todo
         final MyCount myCount = MyCount.getCount(url);
         if (!myCount.beginCount(url, max)) {
             countToMax.incrementAndGet();
