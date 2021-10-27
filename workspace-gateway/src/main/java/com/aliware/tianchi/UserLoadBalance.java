@@ -35,9 +35,9 @@ public class UserLoadBalance implements LoadBalance {
             return invokers.get(0);
 
         // 调用 doSelect 方法进行负载均衡
-        return doSelectPreheat(invokers, url, invocation);
+//        return doSelectPreheat(invokers, url, invocation);
 //        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-//        return doSelectFromInfo(invokers, url, invocation);
+        return doSelect(invokers, url, invocation, "local_random_balance");
     }
 
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation, String type) {
