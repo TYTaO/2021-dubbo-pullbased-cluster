@@ -42,7 +42,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         Result result = invoker.invoke(invocation);
         // wait server a little
         try {
-            Thread.sleep(1);
+            Thread.sleep(1, 500000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
