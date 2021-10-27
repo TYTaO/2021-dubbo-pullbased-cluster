@@ -24,6 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class UserLoadBalance implements LoadBalance {
 
     private static final String IsPreheat = "isPreheat";
+    public static final long preheatDeadline = System.currentTimeMillis() + 50000;
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
@@ -34,7 +35,7 @@ public class UserLoadBalance implements LoadBalance {
             return invokers.get(0);
 
         // 调用 doSelect 方法进行负载均衡
-        return doSelect(invokers, url, invocation, "local_random_balance");
+        return doSelectPreheat(invokers, url, invocation);
 //        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
 //        return doSelectFromInfo(invokers, url, invocation);
     }
@@ -59,5 +60,11 @@ public class UserLoadBalance implements LoadBalance {
         return null;
     }
 
+    protected <T> Invoker<T> doSelectPreheat(List<Invoker<T>> invokers, URL url, Invocation invocation) {
 
+        if (System.currentTimeMillis() <= preheatDeadline) {
+            return doSelect(invokers, url, invocation, "local_random_balance");
+        }
+        return doSelect(invokers, url, invocation, "shortest_response_load_balance");
+    }
 }
