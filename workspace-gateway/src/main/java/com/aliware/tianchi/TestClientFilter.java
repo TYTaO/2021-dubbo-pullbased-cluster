@@ -26,7 +26,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         URL url = invoker.getUrl();
-        int timeout = 10;
+        int timeout = 10; // todo
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
         int max = 100; // todo
         final MyCount myCount = MyCount.getCount(url);
