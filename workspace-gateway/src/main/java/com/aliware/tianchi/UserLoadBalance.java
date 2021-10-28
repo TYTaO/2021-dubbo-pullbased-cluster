@@ -14,6 +14,8 @@ import org.apache.dubbo.rpc.cluster.loadbalance.ShortestResponseLoadBalance;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 负载均衡扩展接口
@@ -25,6 +27,7 @@ public class UserLoadBalance implements LoadBalance {
 
     private static final String IsPreheat = "isPreheat";
     public static final long preheatDeadline = System.currentTimeMillis() + 50000;
+    public static AtomicInteger index = new AtomicInteger();
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
@@ -37,7 +40,8 @@ public class UserLoadBalance implements LoadBalance {
         // 调用 doSelect 方法进行负载均衡
 //        return doSelectPreheat(invokers, url, invocation);
 //        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-        return doSelect(invokers, url, invocation, "local_random_balance");
+//        return doSelect(invokers, url, invocation, "local_random_balance");
+        return roundSelect(invokers, url, invocation);
     }
 
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation, String type) {
@@ -66,5 +70,15 @@ public class UserLoadBalance implements LoadBalance {
             return doSelect(invokers, url, invocation, "local_random_balance");
         }
         return doSelect(invokers, url, invocation, "shortest_response_load_balance");
+    }
+
+    protected <T> Invoker<T> roundSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
+        int size = invokers.size();
+        Invoker invoker = invokers.get(index.get() % size);
+        index.incrementAndGet();
+        if (index.get() > Integer.MAX_VALUE - 100) {
+            index.set(index.get() % size);
+        }
+        return invoker;
     }
 }

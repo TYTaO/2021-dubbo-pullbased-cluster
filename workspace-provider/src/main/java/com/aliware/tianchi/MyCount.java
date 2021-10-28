@@ -12,7 +12,7 @@ public class MyCount {
     private static final ConcurrentMap<String, MyCount> SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyCount>();
 
-    private static final int initMax = 30;
+    private static final int initMax = 5;
     private static final int initStep = 5;
     private static final int maxStepAbs = 3;
     private static final int minStepAbs = 3;
@@ -61,7 +61,8 @@ public class MyCount {
     }
 
     private boolean isOk() {
-        return System.currentTimeMillis() > preheatSumDdl;
+//        return System.currentTimeMillis() > preheatSumDdl;
+        return false;
     }
 
     public static boolean beginCount(URL url, int max) {
@@ -150,7 +151,19 @@ public class MyCount {
     private int getStep(int lastReq, int thisReq, int oldStep) {
         int slope = (thisReq - lastReq) / oldStep;
 
-        return slope >= 0 ? stepAbsFix : -stepAbsFix;
+        int repChange = Math.abs(thisReq - lastReq);
+        int minReq = Math.min(thisReq, lastReq);
+
+        if (repChange < minReq * 0.25) {
+            return slope >= 0 ? 1 : -1;
+        } else if (repChange < minReq * 0.5) {
+            return slope >= 0 ? 2 : -2;
+        } else if (repChange < minReq) {
+            return slope >= 0 ? 3 : -3;
+        } else {
+            return slope >= 0 ? 4 : -4;
+        }
+//        return slope >= 0 ? stepAbsFix : -stepAbsFix;
     }
 
     public int getMax() {
