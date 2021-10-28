@@ -13,6 +13,7 @@ public class RpcRequest {
     public Double weight;
 
     public RpcRequest(String url, double weight) {
+//        System.out.println("weight: " + weight);
         this.url = url;
         this.weight = weight;
     }

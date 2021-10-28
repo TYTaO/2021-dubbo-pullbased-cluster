@@ -48,7 +48,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
+//        System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
         return result;
     }
 
@@ -59,24 +59,29 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         int maxConcurrent = Integer.parseInt(appResponse.getAttachment(MAX_CONCURRENT));
         MyRpcStatus.getStatus(url).maxConcurrent.set(maxConcurrent);
 
-        if (maxConcurrent != 0 && MyRpcStatus.getStatus(url).isInit.get()) {
-            MyRpcStatus.getStatus(url).isInit.set(false);
+        if (maxConcurrent != 0 && !MyRpcStatus.getStatus(url).isInit.get()) {
+            MyRpcStatus.getStatus(url).isInit.set(true);
             MyRpcStatus.initQueue(url, 2 * maxConcurrent);
         }
+        if (MyRpcStatus.getStatus(url).isInit.get()) {
+            int active = Integer.parseInt(appResponse.getAttachment(ACTIVES));
+            MyRpcStatus.record(url, active);
+        }
 
-        int active = Integer.parseInt(appResponse.getAttachment(ACTIVES));
-        MyRpcStatus.record(url, active);
 
         MyCount.endCount(url, getElapsed(invocation), true);
         MyRpcStatus.endCount(url, getElapsed(invocation), true);
-        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded() + " maxConcurrent: " + maxConcurrent);
+//        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded() + " maxConcurrent: " + maxConcurrent);
     }
 
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
 //        System.out.println("== " + t);
         URL url = invoker.getUrl();
-        MyRpcStatus.record(url, -1);
+
+        if (MyRpcStatus.getStatus(url).isInit.get()) {
+            MyRpcStatus.record(url, -1);
+        }
 
         if (t instanceof RpcException) {
             RpcException rpcException = (RpcException) t;
@@ -86,7 +91,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         }
         MyRpcStatus.endCount(url, getElapsed(invocation), false);
         MyCount.endCount(url, getElapsed(invocation), false);
-        System.out.println("-fail: " + MyCount.getCount(url).getFailed());
+//        System.out.println("-fail: " + MyCount.getCount(url).getFailed());
     }
 
     private long getElapsed(Invocation invocation) {

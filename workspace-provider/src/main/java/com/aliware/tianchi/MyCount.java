@@ -23,8 +23,8 @@ public class MyCount {
     private static final long preheatIntervalSum = 50000; //50000
     private static final long preheatSumDdl = System.currentTimeMillis() + preheatIntervalSum; //
 
-    private static final int largeChange = 4; // todo change account to local (3) or server (10)
-    private static final int littleChange = 4; // todo change account to local (1) or server (3)
+    private static final int largeChange = 4; // todo change account to local (3) or server (4)
+    private static final int littleChange = 4; // todo change account to local (1) or server (4)
 
 
     private final AtomicInteger active = new AtomicInteger();
@@ -124,7 +124,7 @@ public class MyCount {
 
                     // update
                     updateBestMax(thisMax.get(), thisReq);
-                    System.out.println("max: " + thisMax.get() + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
+//                    System.out.println("max: " + thisMax.get() + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
 
                     lastReq.set(thisReq);
                     lastMax.set(thisMax.get());
@@ -176,7 +176,7 @@ public class MyCount {
 
     public int getMax() {
         if (isOk()) {
-            System.out.println("ok" + " best: " + bestMax.get());
+//            System.out.println("ok" + " best: " + bestMax.get());
             return this.bestMax.get();
         }
         return this.thisMax.get();

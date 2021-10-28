@@ -111,7 +111,17 @@ public class UserLoadBalance implements LoadBalance {
     // Do select from info.
     protected <T> Invoker<T> doSelectFromInfo(List<Invoker<T>> invokers, URL url, Invocation invocation) {
 
-        if (System.currentTimeMillis() <= preheatDeadline) {
+//        System.out.println("RPC_QUEUE size: " + MyRpcStatus.RPC_QUEUE.size());
+        boolean allNodeInit = false;
+
+        for (Invoker tinvoker : invokers) {
+            allNodeInit = MyRpcStatus.getStatus(tinvoker.getUrl()).isInit.get();
+            if (!allNodeInit) {
+                break;
+            }
+        }
+
+        if (System.currentTimeMillis() <= preheatDeadline && !allNodeInit) {
             return doSelect(invokers, url, invocation, "local_random_balance");
         }
 
