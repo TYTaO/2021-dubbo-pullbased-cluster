@@ -44,7 +44,7 @@ public class MyRpcStatus {
             return initTimeout;
         }
 //        int max = (int) MyCount.getCount(url).getSucceededAverageElapsed() * 3;
-        int max = initTimeout * 2;
+        int max = initTimeout;
         if (lastElapsed > max) {
             return max;
         }

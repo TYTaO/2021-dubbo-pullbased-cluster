@@ -4,6 +4,7 @@ import org.apache.dubbo.common.URL;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -12,27 +13,33 @@ public class MyCount {
     private static final ConcurrentMap<String, MyCount> SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyCount>();
 
-    private static final int initMax = 30;
-    private static final int initStep = 3;
-    private static final int maxStepAbs = 3;
-    private static final int minStepAbs = 3;
+    private static final int initMax = 5;
+//    private static final int initStep = 3;
+//    private static final int maxStepAbs = 3;
+//    private static final int minStepAbs = 3;
     private static final long interval = 2500; // 2s
     private static final long preheatInterval = 600; // 2s
-    private static final int stepAbsFix = 5; //
+//    private static final int stepAbsFix = 5; //
     private static final long preheatIntervalSum = 50000; //50000
     private static final long preheatSumDdl = System.currentTimeMillis() + preheatIntervalSum; //
+
+    private static final int maxChange = 50;
+    private static final int littleChange = 3; // todo change account to local or server
 
 
     private final AtomicInteger active = new AtomicInteger();
     private final AtomicLong succeeded = new AtomicLong();
     private final AtomicInteger failed = new AtomicInteger();
 
-    private final AtomicInteger step = new AtomicInteger(initStep);
-    private final AtomicInteger lastStep = new AtomicInteger(initStep);
+//    private final AtomicInteger step = new AtomicInteger(initStep);
+//    private final AtomicInteger lastStep = new AtomicInteger(initStep);
     private final AtomicInteger lastReq = new AtomicInteger(0);
     private final AtomicInteger bestReq = new AtomicInteger(0);
-    private final AtomicInteger bestMax = new AtomicInteger(initMax);
-    private final AtomicInteger lastMax = new AtomicInteger(initMax);
+    private final AtomicInteger bestMax = new AtomicInteger(0);
+    private final AtomicInteger lastMax = new AtomicInteger(0);
+    private final AtomicBoolean isFastStart = new AtomicBoolean(true);
+
+
 
     private final AtomicInteger thisReqTmp = new AtomicInteger(0);
     private final AtomicInteger thisMax = new AtomicInteger(initMax);
@@ -113,25 +120,21 @@ public class MyCount {
                         return;
                     }
                     int thisReq = thisReqTmp.get();
-                    int newStep = getStep(lastReq.get(), thisReq, this.step.get());
+                    int nextMax = getNextMax(lastReq.get(), thisReq, lastMax.get(), thisMax.get());
 
 
                     // update
                     updateBestMax(thisMax.get(), thisReq);
-                    System.out.println("max: " + thisMax.get() + " step: " + step + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
+                    System.out.println("max: " + thisMax.get() + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
 
-                    lastStep.set(this.step.get());
-                    this.step.set(newStep);
                     lastReq.set(thisReq);
                     lastMax.set(thisMax.get());
 
-                    int newMax = thisMax.get() + this.step.get();
-                    if (newMax < 1) { // 极端
-                        newMax = 2;
-                        step.set(1);
-                        thisMax.set(newMax);
+                    if (nextMax < 1) { // 极端
+                        nextMax = 2;
+                        thisMax.set(nextMax);
                     } else {
-                        thisMax.set(thisMax.get() + this.step.get());
+                        thisMax.set(nextMax);
                     }
 
                     thisReqTmp.set(0); // 归零
@@ -147,10 +150,33 @@ public class MyCount {
         }
     }
 
-    private int getStep(int lastReq, int thisReq, int oldStep) {
-        int slope = (thisReq - lastReq) / oldStep;
+//    private int getStep(int lastReq, int thisReq, int oldStep) {
+//        int slope = (thisReq - lastReq) / oldStep;
+//
+//        return slope >= 0 ? stepAbsFix : -stepAbsFix;
+//    }
 
-        return slope >= 0 ? stepAbsFix : -stepAbsFix;
+    private int getNextMax(int lastReq, int thisReq, int lastMax, int thisMax) {
+        boolean isAdd = (thisReq - lastReq) * (thisMax - lastMax) > 0; //
+
+        if (isAdd) {
+            if (isFastStart.get()) {
+                int newNum = thisMax << 1;
+                if (newNum - thisMax > maxChange) {
+                    return thisMax + maxChange;
+                }
+                return newNum;
+            } else { // 微调
+                return thisMax + littleChange;
+            }
+        } else {
+            if (isFastStart.get()) {
+                isFastStart.set(false);
+                return thisMax >> 1;
+            } else {
+                return thisMax - littleChange;
+            }
+        }
     }
 
     public int getMax() {
