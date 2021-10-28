@@ -20,6 +20,7 @@ import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
 public class TestClientFilter implements Filter, BaseFilter.Listener {
 
     private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
+    private static final String MAX_CONCURRENT = "max_concurrent";
     private static final AtomicInteger countToMax = new AtomicInteger(0);
 
     @Override
@@ -54,9 +55,12 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         URL url = invoker.getUrl();
 
+        int maxConcurrent = Integer.parseInt(appResponse.getAttachment(MAX_CONCURRENT));
+        MyRpcStatus.getStatus(url).maxConcurrent.set(maxConcurrent);
+
         MyCount.endCount(url, getElapsed(invocation), true);
         MyRpcStatus.endCount(url, getElapsed(invocation), true);
-        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded());
+        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded() + " maxConcurrent: " + maxConcurrent);
     }
 
     @Override

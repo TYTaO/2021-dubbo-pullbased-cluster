@@ -17,6 +17,7 @@ public class MyRpcStatus {
     private static final int initTimeout = 160;
     public final AtomicInteger LastElapsed = new AtomicInteger();
 //    public static AtomicLong initCount = new AtomicLong(1000);
+    public AtomicInteger maxConcurrent = new AtomicInteger();
 
     private MyRpcStatus() {
     }

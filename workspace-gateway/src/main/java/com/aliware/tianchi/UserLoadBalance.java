@@ -4,6 +4,7 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.rpc.RpcStatus;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 import org.apache.dubbo.rpc.cluster.loadbalance.ConsistentHashLoadBalance;
 import org.apache.dubbo.rpc.cluster.loadbalance.LeastActiveLoadBalance;
@@ -28,6 +29,7 @@ public class UserLoadBalance implements LoadBalance {
     private static final String IsPreheat = "isPreheat";
     public static final long preheatDeadline = System.currentTimeMillis() + 50000;
     public static AtomicInteger index = new AtomicInteger();
+    public static int DEFAULT_CONCURRENT = 10;
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
@@ -41,7 +43,8 @@ public class UserLoadBalance implements LoadBalance {
 //        return doSelectPreheat(invokers, url, invocation);
 //        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
 //        return doSelect(invokers, url, invocation, "local_random_balance");
-        return roundSelect(invokers, url, invocation);
+//        return roundSelect(invokers, url, invocation);
+        return randomWeightSelect(invokers, url, invocation);
     }
 
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation, String type) {
@@ -80,5 +83,34 @@ public class UserLoadBalance implements LoadBalance {
             index.set(index.get() % size);
         }
         return invoker;
+    }
+
+    protected <T> Invoker<T> randomWeightSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
+        int total = 0;
+        int size = invokers.size();
+        int[] weights = new int[size];
+
+        for (int i = 0; i < size; i++) {
+            weights[i] = getWeight(invokers.get(i));
+            total += weights[i];
+        }
+
+        int select = size - 1;
+        int random = ThreadLocalRandom.current().nextInt(total);
+        for (int i = 0; i < size - 1; i++) {
+            random -= weights[i];
+            if (random < 0) {
+                select = i;
+                break;
+            }
+        }
+        return invokers.get(select);
+    }
+
+
+    private int getWeight(Invoker invoker) {
+        URL url = invoker.getUrl();
+        int maxConcurrent = MyRpcStatus.getStatus(url).maxConcurrent.get();
+        return maxConcurrent == 0 ? DEFAULT_CONCURRENT : maxConcurrent;
     }
 }

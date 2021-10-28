@@ -24,6 +24,8 @@ import static org.apache.dubbo.rpc.Constants.EXECUTES_KEY;
 public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private static final AtomicInteger countToMax = new AtomicInteger(0);
+    private static final String MAX_CONCURRENT = "max_concurrent";
+
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
@@ -55,8 +57,10 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         URL url = invoker.getUrl();
 
-        MyCount.endCount(url, true);
+        int maxConcurrent = MyCount.getCount(url).getMaxToClient();
+        appResponse.setAttachment(MAX_CONCURRENT, String.valueOf(maxConcurrent));
 
+        MyCount.endCount(url, true);
     }
 
     @Override

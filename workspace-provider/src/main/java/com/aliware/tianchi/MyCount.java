@@ -181,4 +181,11 @@ public class MyCount {
         }
         return this.thisMax.get();
     }
+
+    public int getMaxToClient() {
+        if(isOk()) {
+            return this.bestMax.get();
+        }
+        return 0;
+    }
 }
