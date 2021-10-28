@@ -4,6 +4,7 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.RpcStatus;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -12,11 +13,12 @@ public class MyRpcStatus {
             MyRpcStatus>();
     public static ConcurrentSkipListSet<RpcRequest> RPC_QUEUE = new ConcurrentSkipListSet<>(new RpcRequest.Compartor());
 
-    public static final int defaultWeight = 10;
+    public static final int defaultWeight = 10;  // todo
     private static final int initTimeout = 160;
     public final AtomicInteger LastElapsed = new AtomicInteger();
 //    public static AtomicLong initCount = new AtomicLong(1000);
     public AtomicInteger maxConcurrent = new AtomicInteger();
+    public AtomicBoolean isInit = new AtomicBoolean(true);
 
     private MyRpcStatus() {
     }
@@ -62,14 +64,16 @@ public class MyRpcStatus {
     }
 
     public static void record(URL url, int active) {
-        String uri = url.toIdentityString();
-        int maxActive = MyRpcStatus.getStatus(url).maxConcurrent.get();
-        RPC_QUEUE.add(new RpcRequest(uri, active * 1.0 / (maxActive + 1)));
+        if (active != -1) {
+            String uri = url.toIdentityString();
+            int maxActive = MyRpcStatus.getStatus(url).maxConcurrent.get();
+            RPC_QUEUE.add(new RpcRequest(uri, (active + ThreadLocalRandom.current().nextDouble())/ (maxActive + 1)));
+        }
     }
 
     public static void initQueue(URL url, int maxLength) {
         for (int i = 0; i < maxLength; i++) {
-            record(url, defaultWeight + ThreadLocalRandom.current().nextInt());
+            record(url, defaultWeight);
         }
     }
 }

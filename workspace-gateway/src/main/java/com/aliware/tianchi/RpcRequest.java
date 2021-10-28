@@ -14,7 +14,7 @@ public class RpcRequest {
 
     public RpcRequest(String url, double weight) {
         this.url = url;
-        this.weight = weight + ThreadLocalRandom.current().nextDouble();
+        this.weight = weight;
     }
 
     static class Compartor implements Comparator<RpcRequest> {

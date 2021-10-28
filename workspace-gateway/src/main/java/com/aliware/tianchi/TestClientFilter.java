@@ -58,6 +58,12 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         int maxConcurrent = Integer.parseInt(appResponse.getAttachment(MAX_CONCURRENT));
         MyRpcStatus.getStatus(url).maxConcurrent.set(maxConcurrent);
+
+        if (maxConcurrent != 0 && MyRpcStatus.getStatus(url).isInit.get()) {
+            MyRpcStatus.getStatus(url).isInit.set(false);
+            MyRpcStatus.initQueue(url, 2 * maxConcurrent);
+        }
+
         int active = Integer.parseInt(appResponse.getAttachment(ACTIVES));
         MyRpcStatus.record(url, active);
 
@@ -70,7 +76,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
 //        System.out.println("== " + t);
         URL url = invoker.getUrl();
-        MyRpcStatus.record(url, MyRpcStatus.defaultWeight);
+        MyRpcStatus.record(url, -1);
 
         if (t instanceof RpcException) {
             RpcException rpcException = (RpcException) t;
