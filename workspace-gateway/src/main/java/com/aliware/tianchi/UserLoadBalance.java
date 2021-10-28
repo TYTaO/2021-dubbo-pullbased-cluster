@@ -44,7 +44,8 @@ public class UserLoadBalance implements LoadBalance {
 //        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
 //        return doSelect(invokers, url, invocation, "local_random_balance");
 //        return roundSelect(invokers, url, invocation);
-        return randomWeightSelect(invokers, url, invocation);
+//        return randomWeightSelect(invokers, url, invocation);
+        return doSelectFromInfo(invokers, url, invocation);
     }
 
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation, String type) {
@@ -105,6 +106,26 @@ public class UserLoadBalance implements LoadBalance {
             }
         }
         return invokers.get(select);
+    }
+
+    protected <T> Invoker<T> doSelectFromInfo(List<Invoker<T>> invokers, URL url, Invocation invocation) {
+        RpcRequest  request;
+        System.out.println("Queue size: " + MyRpcStatus.RPC_QUEUE.size());
+        if ((request = MyRpcStatus.select()) == null) {
+            for(Invoker tinvoke : invokers) {
+                MyRpcStatus.initQueue(tinvoke.getUrl(), 2);
+            }
+            request = MyRpcStatus.select();
+        }
+
+        Invoker invoker = null;
+        for (Invoker tinvoke : invokers) {
+            if (tinvoke.getUrl().toIdentityString().compareTo(request.url) == 0) {
+                invoker = tinvoke;
+                break;
+            }
+        }
+        return invoker;
     }
 
 

@@ -3,17 +3,16 @@ package com.aliware.tianchi;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.RpcStatus;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MyRpcStatus {
     private static final ConcurrentMap<String, MyRpcStatus> MY_SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyRpcStatus>();
+    public static ConcurrentSkipListSet<RpcRequest> RPC_QUEUE = new ConcurrentSkipListSet<>(new RpcRequest.Compartor());
 
+    public static final int defaultWeight = 10;
     private static final int initTimeout = 160;
     public final AtomicInteger LastElapsed = new AtomicInteger();
 //    public static AtomicLong initCount = new AtomicLong(1000);
@@ -49,5 +48,28 @@ public class MyRpcStatus {
             return max;
         }
         return lastElapsed + 3; // magic num
+    }
+
+    // Priority queue
+
+    // select first element.
+    public static RpcRequest select() {
+        RpcRequest request = RPC_QUEUE.pollFirst();
+        if (request != null) {
+            System.out.println("URL: " + request.url + "  Load: " + request.weight);
+        }
+        return request;
+    }
+
+    public static void record(URL url, int active) {
+        String uri = url.toIdentityString();
+        int maxActive = MyRpcStatus.getStatus(url).maxConcurrent.get();
+        RPC_QUEUE.add(new RpcRequest(uri, active * 1.0 / (maxActive + 1)));
+    }
+
+    public static void initQueue(URL url, int maxLength) {
+        for (int i = 0; i < maxLength; i++) {
+            record(url, defaultWeight + ThreadLocalRandom.current().nextInt());
+        }
     }
 }
