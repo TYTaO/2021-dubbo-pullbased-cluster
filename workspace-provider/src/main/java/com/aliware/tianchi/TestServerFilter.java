@@ -25,6 +25,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
     private static final AtomicInteger countToMax = new AtomicInteger(0);
     private static final String MAX_CONCURRENT = "max_concurrent";
+    private static final String ACTIVES = "ACTIVES";
 
 
     @Override
@@ -41,6 +42,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         }
 
         try {
+            invocation.put(ACTIVES, myCount.getActive());
             Result result = invoker.invoke(invocation);
 //            System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
             return result;
@@ -59,6 +61,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
 
         int maxConcurrent = MyCount.getCount(url).getMaxToClient();
         appResponse.setAttachment(MAX_CONCURRENT, String.valueOf(maxConcurrent));
+        appResponse.setAttachment(ACTIVES, String.valueOf(getActives(invocation)));
 
         MyCount.endCount(url, true);
     }
@@ -76,5 +79,10 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         }
         MyCount.endCount(url, false);
 //        System.out.println("-fail: " + MyCount.getCount(url).getFailed());
+    }
+
+    private long getActives(Invocation invocation) {
+        Object actives = invocation.get(ACTIVES);
+        return (int) actives;
     }
 }
