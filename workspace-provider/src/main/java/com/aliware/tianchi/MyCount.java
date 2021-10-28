@@ -13,7 +13,7 @@ public class MyCount {
             MyCount>();
 
     private static final int initMax = 30;
-    private static final int initStep = 5;
+    private static final int initStep = 3;
     private static final int maxStepAbs = 3;
     private static final int minStepAbs = 3;
     private static final long interval = 2500; // 2s

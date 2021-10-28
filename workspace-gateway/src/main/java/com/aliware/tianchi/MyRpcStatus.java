@@ -14,7 +14,7 @@ public class MyRpcStatus {
     private static final ConcurrentMap<String, MyRpcStatus> MY_SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyRpcStatus>();
 
-    private static final int initTimeout = 160;
+    private static final int initTimeout = 30;
     public final AtomicInteger LastElapsed = new AtomicInteger();
 //    public static AtomicLong initCount = new AtomicLong(1000);
 
@@ -43,7 +43,8 @@ public class MyRpcStatus {
         if (lastElapsed == 0) {
             return initTimeout;
         }
-        int max = (int) MyCount.getCount(url).getSucceededAverageElapsed() * 3;
+//        int max = (int) MyCount.getCount(url).getSucceededAverageElapsed() * 3;
+        int max = initTimeout * 2;
         if (lastElapsed > max) {
             return max;
         }
