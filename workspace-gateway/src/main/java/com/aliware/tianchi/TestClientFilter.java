@@ -29,7 +29,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         URL url = invoker.getUrl();
         int timeout = MyRpcStatus.getTimeout(url); // todo
         RpcContext.getClientAttachment().setAttachment(TIMEOUT_KEY, timeout);
-        int max = 200; // todo
+        int max = 0; // todo
         final MyCount myCount = MyCount.getCount(url);
         if (!myCount.beginCount(url, max)) {
             countToMax.incrementAndGet();
@@ -43,7 +43,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         Result result = invoker.invoke(invocation);
         // wait server a little
         try {
-            Thread.sleep(2);
+            Thread.sleep(1, 500_000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

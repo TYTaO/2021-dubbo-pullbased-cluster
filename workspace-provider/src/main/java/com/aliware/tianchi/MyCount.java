@@ -23,8 +23,8 @@ public class MyCount {
     private static final long preheatIntervalSum = 50000; //50000
     private static final long preheatSumDdl = System.currentTimeMillis() + preheatIntervalSum; //
 
-    private static final int largeChange = 10; // todo change account to local (3) or server (10)
-    private static final int littleChange = 3; // todo change account to local (1) or server (3)
+    private static final int largeChange = 4; // todo change account to local (3) or server (10)
+    private static final int littleChange = 4; // todo change account to local (1) or server (3)
 
 
     private final AtomicInteger active = new AtomicInteger();
