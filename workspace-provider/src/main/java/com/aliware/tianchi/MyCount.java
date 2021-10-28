@@ -13,7 +13,7 @@ public class MyCount {
     private static final ConcurrentMap<String, MyCount> SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyCount>();
 
-    private static final int initMax = 5;
+    private static final int initMax = 10; // todo change account to local (2) or server (10)
 //    private static final int initStep = 3;
 //    private static final int maxStepAbs = 3;
 //    private static final int minStepAbs = 3;
@@ -23,8 +23,8 @@ public class MyCount {
     private static final long preheatIntervalSum = 50000; //50000
     private static final long preheatSumDdl = System.currentTimeMillis() + preheatIntervalSum; //
 
-    private static final int maxChange = 50;
-    private static final int littleChange = 3; // todo change account to local or server
+    private static final int largeChange = 10; // todo change account to local (3) or server (10)
+    private static final int littleChange = 3; // todo change account to local (1) or server (3)
 
 
     private final AtomicInteger active = new AtomicInteger();
@@ -122,7 +122,6 @@ public class MyCount {
                     int thisReq = thisReqTmp.get();
                     int nextMax = getNextMax(lastReq.get(), thisReq, lastMax.get(), thisMax.get());
 
-
                     // update
                     updateBestMax(thisMax.get(), thisReq);
                     System.out.println("max: " + thisMax.get() + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
@@ -161,18 +160,14 @@ public class MyCount {
 
         if (isAdd) {
             if (isFastStart.get()) {
-                int newNum = thisMax << 1;
-                if (newNum - thisMax > maxChange) {
-                    return thisMax + maxChange;
-                }
-                return newNum;
+                return thisMax + largeChange;
             } else { // 微调
                 return thisMax + littleChange;
             }
         } else {
             if (isFastStart.get()) {
                 isFastStart.set(false);
-                return thisMax >> 1;
+                return thisMax - largeChange;
             } else {
                 return thisMax - littleChange;
             }
