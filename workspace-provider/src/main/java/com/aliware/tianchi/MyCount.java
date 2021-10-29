@@ -17,7 +17,7 @@ public class MyCount {
 //    private static final int initStep = 3;
 //    private static final int maxStepAbs = 3;
 //    private static final int minStepAbs = 3;
-    private static final long interval = 2500; // 2s
+    private static final long interval = 2000; // 2s
     private static final long preheatInterval = 600; // 2s
 //    private static final int stepAbsFix = 5; //
     private static final long preheatIntervalSum = 50000; //50000

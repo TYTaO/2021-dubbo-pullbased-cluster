@@ -43,11 +43,11 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         Result result = invoker.invoke(invocation);
         // wait server a little
-//        try {
-//            Thread.sleep(1, 500_000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            Thread.sleep(1, 500_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 //        System.out.println("active: " + myCount.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
         return result;
     }
