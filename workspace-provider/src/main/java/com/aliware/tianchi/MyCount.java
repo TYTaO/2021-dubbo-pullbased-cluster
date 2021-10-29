@@ -13,7 +13,7 @@ public class MyCount {
     private static final ConcurrentMap<String, MyCount> SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyCount>();
 
-    private static final int initMax = 30; // todo change account to local (2) or server (30)
+    private static final int initMax = 35; // todo change account to local (2) or server (30)
 //    private static final int initStep = 3;
 //    private static final int maxStepAbs = 3;
 //    private static final int minStepAbs = 3;
