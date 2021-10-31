@@ -36,7 +36,7 @@ public class MyCount {
 //    private final AtomicInteger lastStep = new AtomicInteger(initStep);
     private final AtomicInteger lastReq = new AtomicInteger(0);
     private final AtomicInteger bestReq = new AtomicInteger(0);
-    private final AtomicInteger bestMax = new AtomicInteger(0);
+    public final AtomicInteger bestMax = new AtomicInteger(0);
     private final AtomicInteger lastMax = new AtomicInteger(0);
     private final AtomicBoolean isFastStart = new AtomicBoolean(true);
 
@@ -125,7 +125,7 @@ public class MyCount {
 
                     // update
                     updateBestMax(thisMax.get(), thisReq);
-//                    System.out.println("max: " + thisMax.get() + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
+                    System.out.println("max: " + thisMax.get() + " req: " + thisReq + " bestMax: " + bestMax + " bestReq: " + bestReq);
 
                     lastReq.set(thisReq);
                     lastMax.set(thisMax.get());

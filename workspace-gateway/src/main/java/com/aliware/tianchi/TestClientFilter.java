@@ -22,6 +22,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
     private static final String MAX_CONCURRENT = "max_concurrent";
     private static final String ACTIVES = "ACTIVES";
+    private static final String FINE_TUNE = "fineTune";
     private static final AtomicInteger countToMax = new AtomicInteger(0);
 
     @Override
@@ -40,6 +41,17 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                             ". concurrent invokes: " +
                             myCount.getActive() + ". max concurrent invoke limit: " + max);
         }
+
+        int fineTuneToProvider = 0;
+        if (myCount.fineTune.get() != 0) {
+            synchronized (myCount) {
+                if (myCount.fineTune.get() != 0) {
+                    fineTuneToProvider = myCount.fineTune.get();
+                    myCount.fineTune.set(0);
+                }
+            }
+        }
+        invocation.setAttachment(FINE_TUNE, String.valueOf(fineTuneToProvider));
 
         Result result = invoker.invoke(invocation);
         // wait server a little
@@ -68,14 +80,17 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 }
             }
         }
+        long elapsed = getElapsed(invocation);
+
         if (status.isInit.get()) {
             int active = Integer.parseInt(appResponse.getAttachment(ACTIVES));
             MyRpcStatus.record(url, active);
+            MyCount.endCountAfterPreheat(url, elapsed, true);
         }
 
 
-        MyCount.endCount(url, getElapsed(invocation), true);
-        MyRpcStatus.endCount(url, getElapsed(invocation), true);
+        MyCount.endCount(url, elapsed, true);
+        MyRpcStatus.endCount(url, elapsed, true);
 //        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded() + " maxConcurrent: " + maxConcurrent + " queue_size: "
 //                + MyRpcStatus.RPC_QUEUE.size() + " initMaxQueueSize: " + MyRpcStatus.initMaxQueueSize.get());
     }

@@ -26,6 +26,7 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
     private static final AtomicInteger countToMax = new AtomicInteger(0);
     private static final String MAX_CONCURRENT = "max_concurrent";
     private static final String ACTIVES = "ACTIVES";
+    private static final String FINE_TUNE = "fineTune";
 
 
     @Override
@@ -33,6 +34,12 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         URL url = invoker.getUrl();
         final MyCount myCount = MyCount.getCount(url);
         int max = myCount.getMax(); // todo
+        Integer fineTune = Integer.valueOf(invocation.getAttachment(FINE_TUNE));
+        if (fineTune != 0) {
+            myCount.bestMax.set(max + fineTune);
+            System.out.println("max: " + max + fineTune);
+        }
+//        System.out.println(max);
         if (!myCount.beginCount(url, max)) {
             countToMax.incrementAndGet();
             throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
