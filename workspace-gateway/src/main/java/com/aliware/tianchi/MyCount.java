@@ -103,10 +103,10 @@ public class MyCount {
                 if (count.ticks.get() > preheatOfAfterPreheat) {
                     long avgElapsed = count.elapsedInPreheatOfAfterPreheat.get() / count.ticks.get();
                     System.out.println("thisAvgElapsed: " + avgElapsed + " totalElapsed: " + count.getSuccElapsedAvgAfterPreheat());
-                    if (avgElapsed > count.getSuccElapsedAvgAfterPreheat() + 1) {
+                    if (avgElapsed > count.getSuccElapsedAvgAfterPreheat()) {
                         // dec max
                         count.fineTune.set(-1);
-                    } else if (elapsed < count.getSuccElapsedAvgAfterPreheat() - 1) {
+                    } else if (elapsed < count.getSuccElapsedAvgAfterPreheat()) {
                         // inc max
                         count.fineTune.set(1);
                     }
