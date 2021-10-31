@@ -57,9 +57,9 @@ public class MyRpcStatus {
     // select first element.
     public static RpcRequest select() {
         RpcRequest request = RPC_QUEUE.pollFirst();
-        if (request != null) {
+//        if (request != null) {
 //            System.out.println("URL: " + request.url + "  Load: " + request.weight);
-        }
+//        }
         return request;
     }
 
@@ -67,7 +67,7 @@ public class MyRpcStatus {
         String uri = url.toIdentityString();
         if (active != -1) {
             int maxActive = MyRpcStatus.getStatus(url).maxConcurrent.get();
-            RPC_QUEUE.add(new RpcRequest(uri, (active + ThreadLocalRandom.current().nextDouble()) * 1.0 / (maxActive + 1)));
+            RPC_QUEUE.add(new RpcRequest(uri, (active + ThreadLocalRandom.current().nextDouble()) / (maxActive + 1)));
         } else {
             RPC_QUEUE.add(new RpcRequest(uri, 1.0 + ThreadLocalRandom.current().nextDouble()));
         }

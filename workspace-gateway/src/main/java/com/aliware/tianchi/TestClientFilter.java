@@ -57,13 +57,18 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
         URL url = invoker.getUrl();
 
         int maxConcurrent = Integer.parseInt(appResponse.getAttachment(MAX_CONCURRENT));
-        MyRpcStatus.getStatus(url).maxConcurrent.set(maxConcurrent);
+        MyRpcStatus status = MyRpcStatus.getStatus(url);
+        status.maxConcurrent.set(maxConcurrent);
 
-        if (maxConcurrent != 0 && !MyRpcStatus.getStatus(url).isInit.get()) {
-            MyRpcStatus.getStatus(url).isInit.set(true);
-            MyRpcStatus.initQueue(url, 2 * maxConcurrent);
+        if (maxConcurrent != 0 && !status.isInit.get()) {
+            synchronized (status) {
+                if (!status.isInit.get()) {
+                    status.isInit.set(true);
+                    MyRpcStatus.initQueue(url, 2 * maxConcurrent);
+                }
+            }
         }
-        if (MyRpcStatus.getStatus(url).isInit.get()) {
+        if (status.isInit.get()) {
             int active = Integer.parseInt(appResponse.getAttachment(ACTIVES));
             MyRpcStatus.record(url, active);
         }
@@ -71,7 +76,8 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 
         MyCount.endCount(url, getElapsed(invocation), true);
         MyRpcStatus.endCount(url, getElapsed(invocation), true);
-//        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded() + " maxConcurrent: " + maxConcurrent);
+//        System.out.println("+succ: " + MyCount.getCount(url).getSucceeded() + " maxConcurrent: " + maxConcurrent + " queue_size: "
+//                + MyRpcStatus.RPC_QUEUE.size() + " initMaxQueueSize: " + MyRpcStatus.initMaxQueueSize.get());
     }
 
     @Override
@@ -79,9 +85,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        System.out.println("== " + t);
         URL url = invoker.getUrl();
 
-        if (MyRpcStatus.getStatus(url).isInit.get()) {
-            MyRpcStatus.record(url, -1);
-        }
+//        if (MyRpcStatus.getStatus(url).isInit.get()) {
+//            MyRpcStatus.record(url, -1);
+//        }
 
         if (t instanceof RpcException) {
             RpcException rpcException = (RpcException) t;

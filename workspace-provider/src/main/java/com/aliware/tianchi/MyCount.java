@@ -23,8 +23,9 @@ public class MyCount {
     private static final long preheatIntervalSum = 50000; //50000
     private static final long preheatSumDdl = System.currentTimeMillis() + preheatIntervalSum; //
 
-    private static final int largeChange = 4; // todo change account to local (3) or server (4)
-    private static final int littleChange = 4; // todo change account to local (1) or server (4)
+//    private static final int largeChange = 4; // todo change account to local (3) or server (4)
+//    private static final int littleChange = 4; // todo change account to local (1) or server (4)
+    private static final int fixChange = 4; // todo change account to local (1) or server (4)
 
 
     private final AtomicInteger active = new AtomicInteger();
@@ -159,18 +160,9 @@ public class MyCount {
         boolean isAdd = (thisReq - lastReq) * (thisMax - lastMax) > 0; //
 
         if (isAdd) {
-            if (isFastStart.get()) {
-                return thisMax + largeChange;
-            } else { // 微调
-                return thisMax + littleChange;
-            }
+            return thisMax + fixChange;
         } else {
-            if (isFastStart.get()) {
-                isFastStart.set(false);
-                return thisMax - largeChange;
-            } else {
-                return thisMax - littleChange;
-            }
+            return thisMax - fixChange;
         }
     }
 

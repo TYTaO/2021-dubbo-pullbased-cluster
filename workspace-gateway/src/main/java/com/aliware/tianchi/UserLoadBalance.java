@@ -126,11 +126,10 @@ public class UserLoadBalance implements LoadBalance {
         }
 
         RpcRequest  request;
-        if ((request = MyRpcStatus.select()) == null) {
+        while ((request = MyRpcStatus.select()) == null) {
             for(Invoker tinvoke : invokers) {
                 MyRpcStatus.initQueue(tinvoke.getUrl(), 1);
             }
-            request = MyRpcStatus.select();
         }
 
         Invoker invoker = null;
