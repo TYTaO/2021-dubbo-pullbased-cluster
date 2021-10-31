@@ -23,7 +23,7 @@ public class MyCount {
     private final AtomicLong succeededAfterPreheat = new AtomicLong();
     private final AtomicLong succElapsedAfterPreheat = new AtomicLong();
     // compute Avg AfterPreheat ticks
-    private final static int preheatOfAfterPreheat = 2000; // todo
+    private final static int preheatOfAfterPreheat = 1000; // todo
     private final AtomicInteger ticks = new AtomicInteger(0);
     private final AtomicLong elapsedInPreheatOfAfterPreheat = new AtomicLong(0);
     public final AtomicInteger fineTune = new AtomicInteger(0);
@@ -103,10 +103,10 @@ public class MyCount {
                 if (count.ticks.get() > preheatOfAfterPreheat) {
                     long avgElapsed = count.elapsedInPreheatOfAfterPreheat.get() / count.ticks.get();
                     System.out.println("thisAvgElapsed: " + avgElapsed + " totalElapsed: " + count.getSuccElapsedAvgAfterPreheat());
-                    if (avgElapsed > count.getSuccElapsedAvgAfterPreheat()) {
+                    if (avgElapsed > count.getSuccElapsedAvgAfterPreheat() + 1) {
                         // dec max
                         count.fineTune.set(-1);
-                    } else if (elapsed < count.getSuccElapsedAvgAfterPreheat()) {
+                    } else if (elapsed < count.getSuccElapsedAvgAfterPreheat() - 1) {
                         // inc max
                         count.fineTune.set(1);
                     }
