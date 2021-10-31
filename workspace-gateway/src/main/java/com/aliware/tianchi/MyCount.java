@@ -23,7 +23,7 @@ public class MyCount {
     private final AtomicLong succeededAfterPreheat = new AtomicLong();
     private final AtomicLong succElapsedAfterPreheat = new AtomicLong();
     // compute Avg AfterPreheat ticks
-    private final static int preheatOfAfterPreheat = 1000; // todo
+    private final static int preheatOfAfterPreheat = 500; // todo
     private final AtomicInteger ticks = new AtomicInteger(0);
     private final AtomicLong elapsedInPreheatOfAfterPreheat = new AtomicLong(0);
     public final AtomicInteger fineTune = new AtomicInteger(0);
