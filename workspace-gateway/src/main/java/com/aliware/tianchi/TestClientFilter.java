@@ -85,9 +85,9 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
 //        System.out.println("== " + t);
         URL url = invoker.getUrl();
 
-//        if (MyRpcStatus.getStatus(url).isInit.get()) {
-//            MyRpcStatus.record(url, -1);
-//        }
+        if (MyRpcStatus.getStatus(url).isInit.get()) {
+            MyRpcStatus.record(url, -1);
+        }
 
         if (t instanceof RpcException) {
             RpcException rpcException = (RpcException) t;
