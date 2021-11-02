@@ -26,10 +26,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class UserLoadBalance implements LoadBalance {
 
-    private static final String IsPreheat = "isPreheat";
-    public static final long preheatDeadline = System.currentTimeMillis() + 50000;
-    public static AtomicInteger index = new AtomicInteger();
-    public static int DEFAULT_CONCURRENT = 10;
+    // 预热时间
+    public static final long preheatDeadline = System.currentTimeMillis() + 50000;  // todo 预热时间和服务端保持一致
+
 
     @Override
     public <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException {
@@ -40,14 +39,20 @@ public class UserLoadBalance implements LoadBalance {
             return invokers.get(0);
 
         // 调用 doSelect 方法进行负载均衡
-//        return doSelectPreheat(invokers, url, invocation);
-//        return invokers.get(ThreadLocalRandom.current().nextInt(invokers.size()));
-//        return doSelect(invokers, url, invocation, "local_random_balance");
-//        return roundSelect(invokers, url, invocation);
-//        return randomWeightSelect(invokers, url, invocation);
-        return doSelectFromInfo(invokers, url, invocation);
+        return doSelect(invokers, url, invocation, "concurrent_load_balance");
     }
 
+
+    /**
+     * 选择负载均衡策略
+     *
+     * @param invokers invoker列表
+     * @param url
+     * @param invocation
+     * @param type
+     * @param <T>
+     * @return 经过负载均衡选择的节点
+     */
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation, String type) {
         switch (type) {
             case "local_random_balance":
@@ -62,58 +67,26 @@ public class UserLoadBalance implements LoadBalance {
                 return new RoundRobinLoadBalance().select(invokers, url, invocation);
             case "shortest_response_load_balance":
                 return new ShortestResponseLoadBalance().select(invokers, url, invocation);
-//            case "my_shortest_response_load_balance":
-//                return new MyShortestResponseLoadBalance().select(invokers, url, invocation);
+            case "concurrent_load_balance":
+                return doSelectFromConcurrentLoad(invokers, url, invocation);
         }
         return null;
     }
 
-    protected <T> Invoker<T> doSelectPreheat(List<Invoker<T>> invokers, URL url, Invocation invocation) {
 
-        if (System.currentTimeMillis() <= preheatDeadline) {
-            return doSelect(invokers, url, invocation, "local_random_balance");
-        }
-        return doSelect(invokers, url, invocation, "shortest_response_load_balance");
-    }
+    /**
+     * 通过线程负载率选择不同的Provider进行负载均衡。
+     *
+     * @param invokers invoker列表
+     * @param url
+     * @param invocation
+     * @param <T>
+     * @return invoker 经过负载均衡（线程负载率最小）选择的节点
+     */
+    protected <T> Invoker<T> doSelectFromConcurrentLoad(List<Invoker<T>> invokers, URL url, Invocation invocation) {
 
-    protected <T> Invoker<T> roundSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
-        int size = invokers.size();
-        Invoker invoker = invokers.get(index.get() % size);
-        index.incrementAndGet();
-        if (index.get() > Integer.MAX_VALUE - 100) {
-            index.set(index.get() % size);
-        }
-        return invoker;
-    }
-
-    protected <T> Invoker<T> randomWeightSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
-        int total = 0;
-        int size = invokers.size();
-        int[] weights = new int[size];
-
-        for (int i = 0; i < size; i++) {
-            weights[i] = getWeight(invokers.get(i));
-            total += weights[i];
-        }
-
-        int select = size - 1;
-        int random = ThreadLocalRandom.current().nextInt(total);
-        for (int i = 0; i < size - 1; i++) {
-            random -= weights[i];
-            if (random < 0) {
-                select = i;
-                break;
-            }
-        }
-        return invokers.get(select);
-    }
-
-    // Do select from info.
-    protected <T> Invoker<T> doSelectFromInfo(List<Invoker<T>> invokers, URL url, Invocation invocation) {
-
-//        System.out.println("RPC_QUEUE size: " + MyRpcStatus.RPC_QUEUE.size());
+        // 判断所有的Provider是否都预热完成
         boolean allNodeInit = false;
-
         for (Invoker tinvoker : invokers) {
             allNodeInit = MyRpcStatus.getStatus(tinvoker.getUrl()).isInit.get();
             if (!allNodeInit) {
@@ -121,14 +94,17 @@ public class UserLoadBalance implements LoadBalance {
             }
         }
 
+        // 预热阶段使用随机策略选择Provider。
         if (System.currentTimeMillis() <= preheatDeadline && !allNodeInit) {
             return doSelect(invokers, url, invocation, "local_random_balance");
         }
 
+        // 选择负载最小的Provider，从优先队列（MyRpcStatus.RPC_QUEUE）中选择。
         RpcRequest  request;
         while ((request = MyRpcStatus.select()) == null) {
+            // 若选择时候队列为空，则继续给队列加初始化的值。
             for(Invoker tinvoke : invokers) {
-                MyRpcStatus.initQueue(tinvoke.getUrl(), 1);
+                MyRpcStatus.initQueue(tinvoke.getUrl(), 1); // todo 初始化的次数默认为1
             }
         }
 
@@ -140,12 +116,5 @@ public class UserLoadBalance implements LoadBalance {
             }
         }
         return invoker;
-    }
-
-
-    private int getWeight(Invoker invoker) {
-        URL url = invoker.getUrl();
-        int maxConcurrent = MyRpcStatus.getStatus(url).maxConcurrent.get();
-        return maxConcurrent == 0 ? DEFAULT_CONCURRENT : maxConcurrent;
     }
 }

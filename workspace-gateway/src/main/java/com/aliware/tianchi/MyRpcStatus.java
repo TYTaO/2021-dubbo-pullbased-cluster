@@ -1,22 +1,21 @@
 package com.aliware.tianchi;
 
 import org.apache.dubbo.common.URL;
-import org.apache.dubbo.rpc.RpcStatus;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MyRpcStatus {
     private static final ConcurrentMap<String, MyRpcStatus> MY_SERVICE_STATISTICS = new ConcurrentHashMap<String,
             MyRpcStatus>();
+
+    // 优先队列，存储节点的负载信息。
     public static ConcurrentSkipListSet<RpcRequest> RPC_QUEUE = new ConcurrentSkipListSet<>(new RpcRequest.Compartor());
 
-    public static final int defaultWeight = 10;  // todo
+    public static final int defaultWeight = 10;  // todo 初始化队列时候默认的权重
     private static final int initTimeout = 160;
     public final AtomicInteger LastElapsed = new AtomicInteger();
-    //    public static AtomicLong initCount = new AtomicLong(1000);
     public AtomicInteger maxConcurrent = new AtomicInteger();
     public AtomicBoolean isInit = new AtomicBoolean(false);
 
@@ -52,17 +51,21 @@ public class MyRpcStatus {
         return lastElapsed + 3; // magic num
     }
 
-    // Priority queue
-
-    // select first element.
+    /**
+     * 在优先队列中取得队头，为负载率最小的节点。
+     *
+     * @return RpcRequest 可标识负载率最小的节点（其中的url字段）。
+     */
     public static RpcRequest select() {
-        RpcRequest request = RPC_QUEUE.pollFirst();
-//        if (request != null) {
-//            System.out.println("URL: " + request.url + "  Load: " + request.weight);
-//        }
-        return request;
+        return RPC_QUEUE.pollFirst();
     }
 
+    /**
+     * 将节点负载信息入队，在OnResponse,OnError及队列初始化时使用。
+     *
+     * @param url 表示不同的Provider。
+     * @param active 该Provider的当前正在运行的请求数。
+     */
     public static void record(URL url, int active) {
         String uri = url.toIdentityString();
         if (active != -1) {
@@ -76,6 +79,12 @@ public class MyRpcStatus {
         }
     }
 
+    /**
+     * 初始化优先队列
+     *
+     * @param url
+     * @param maxLength
+     */
     public static void initQueue(URL url, int maxLength) {
         for (int i = 0; i < maxLength; i++) {
             record(url, defaultWeight);
