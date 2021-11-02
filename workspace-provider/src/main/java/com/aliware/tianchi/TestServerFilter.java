@@ -41,7 +41,6 @@ public class TestServerFilter implements Filter, BaseFilter.Listener {
         try {
             invocation.put(ACTIVES, serverRpcStatus.getActive());
             Result result = invoker.invoke(invocation);
-//            System.out.println("active: " + serverRpcStatus.getActive() + " max: " + max + " maxToGetCount: " + countToMax.get());
             return result;
         } catch (Throwable t) {
             if (t instanceof RuntimeException) {

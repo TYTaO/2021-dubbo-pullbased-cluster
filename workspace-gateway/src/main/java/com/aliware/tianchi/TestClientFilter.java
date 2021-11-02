@@ -8,7 +8,6 @@ import org.apache.dubbo.rpc.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.dubbo.common.constants.CommonConstants.TIMEOUT_KEY;
-import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
 
 /**
  * 客户端过滤器（选址后）
@@ -22,7 +21,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
     private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
     private static final String MAX_CONCURRENT = "max_concurrent";
     private static final String ACTIVES = "ACTIVES";
-    private static final String FINE_TUNE = "fineTune";
+    private static final String FINE_TUNE_FROM_CLIENT = "fineTuneFromClient";
     private static final AtomicInteger countToMax = new AtomicInteger(0);
 
     @Override
@@ -51,7 +50,7 @@ public class TestClientFilter implements Filter, BaseFilter.Listener {
                 }
             }
         }
-        invocation.setAttachment(FINE_TUNE, String.valueOf(fineTuneToProvider));
+        invocation.setAttachment(FINE_TUNE_FROM_CLIENT, String.valueOf(fineTuneToProvider));
 
         Result result = invoker.invoke(invocation);
         // wait server a little
