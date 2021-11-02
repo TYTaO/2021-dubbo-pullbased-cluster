@@ -27,10 +27,6 @@ public class UserClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
-        return select(loadbalance, invocation, invokers, null).invoke(invocation)
-                .whenCompleteWithContext((r, t) -> {
-                    String value = r.getAttachment("TestKey");
-                    logger.info("TestKey From ClusterInvoker, value: " + value);
-                });
+        return select(loadbalance, invocation, invokers, null).invoke(invocation);
     }
 }
